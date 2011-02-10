@@ -1,0 +1,6 @@
+This game was developed around the idea of having a robust JS engine, so I could easily, quickly, and intuitively create games for the web using whatever technology I wished. The graphics engine is plug and play, and the physics engine is also the same way. Switch on variable and it's done. Of course the engine needs the correct interface, but the interface is maintained to be intuitive.
+
+Currently the engine has the ability to change various settings like size and scale, while also being able to plug-in a custom made physics engine, or box2d (with a custom interface), or on the graphics end it supports DOM, and Canvas.
+
+The engine is planned to have support for an SVG engine, and a webGL engine.
+It also has a plug and play input system, however that hasn't been fully realized yet (Their is only one input system currently).
