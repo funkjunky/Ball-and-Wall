@@ -1,0 +1,47 @@
+---
+Short Term Plans
+---
+TODO:
+	-Detect clicking area in grid. Perhaps by colouring the square on click.
+	-Register wall building coords on click.
+	-prepare wall building animation and stat changes, then have them change
+	and further, have the graphic show up.
+	-add physics to the wall that is being showed up, using the changing
+	stats of the wall.
+	-add detection of hitting a bad spot of the wall, the corners.
+	-ensure everything is solid with dividers with collisions, and that the animation has stopped. Also that multiple can be deployed.
+	-implemented dividers horizontally. then test them.
+
+	-error console, in the form of messages. A new P tag for every message/
+		as well as the time it happened and what kind of error/warning it was.
+		different from the debug screen. These messages can't be changed.
+		Mostly for exception handling.
+	-Should go below the debug div I think.
+	
+
+DONE:
+	(10/6/10)-put a debugger in the gameEngine. One that uses an associative array.
+	(10/6/10)-Create engine. Engine contains everything for running A game... what game doesn't matter. This will contain: ticker, canvas, game, and maybe other things. It will control the loop among other things.
+	(10/8/10)-get box2D to work, using the same interface as myPhysics (interface already done). what do i do with drawing?
+	(10/8/10)-Integrate box2d with current game, but with my own graphics.
+	(10/9/10)-remove event stuff and put it in the file extracrap.js
+	(10/9/10)-give the ball and rectangle position objects, then pass that object to
+		the box2d physics object. test to ensure it works.
+	(10/9/10)-take the velocity out of the game, and put it into myPhysics. 
+	(10/9/10)- resolve Collision should be private, and it should have na update insteAD
+	(10/9/10)-add x and y to the constructor of Ball, and set the pos by that.
+	(10/9/10)-give Ball a proper constructor.
+	(10/9/10)-integrate the velocities of my game ball and the physics.
+	(10/10/10)-add a timing regular for update.
+	(10/11/10)-make sure game doesn't store anything to do with the DOM or anything like that. Truly the DOM should be non-existant in the game.
+		-wrap canvas stuff into a drawing engine in gameEngine.
+		-class names should be like "canvasEngine" or "domEngine"
+		-I should set the drawEngine variable in gameEngine, then call the
+		member variables to draw things.
+	(10/11/10)-draw the map, by drawing rectangles... not using the map.
+	(10/11/10)-implemented gamespeed to work.
+	(10/13/10)-add Eventlistener class and attach it to the gameEngine.
+	(10/13/10)-Transfer the pause functionality to this EventListener.
+	(10/13/10)-add a debug statement to track the number of threads
+					-learned JS is reentreant. Fake threading.
+	(10/13/10)-add a DOMGraphics engine class.
