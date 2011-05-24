@@ -2,11 +2,22 @@ function DOMEventListener(container)
 {
 	this.container = 0;
 	this.eventListeners = 0;
+	this.customEventsCBs = {};
+	this.customEvents;
 
 	this.constructor = function(container)
 	{
 		this.container = container;
 		this.eventListeners = [];
+
+		//setup the custom events.
+		this.customEvents = {
+			swipe: new Swipe(container),
+		};
+
+		//setup the custom events callbacks arrays.
+		for(i in this.customEvents)
+			this.customEventsCBs[i] = [];
 	};
 
 	//pass any additional parameters as deemed necessary.
@@ -18,15 +29,23 @@ function DOMEventListener(container)
 		if(arguments.length >= 3)
 		{
 			var additionalArgs = Array.prototype.slice.call(arguments, 2);
-			finalcb = function()
+			finalcb = function(e)
 			{
-				callback.apply(this.container, additionalArgs);
+				//concat additionalArgs to arguments.
+				for(var i=0; i!= additionalArgs.length; ++i)
+					arguments[arguments.length++] = additionalArgs[i];
+
+				callback.apply(this.container, arguments);
 			};
 		}
 		else
 			finalcb = callback;
 
-		this.container.addEventListener(type, finalcb, false);
+		if(typeof this.customEvents[type] == "undefined")
+			this.container.addEventListener(type, finalcb, false);
+		else {
+			this.customEvents[type].addCallback(finalcb);
+		}
 
 		var currentIndex = this.eventListeners.length;
 		this.eventListeners[currentIndex] = {type: type, callback: callback};
@@ -38,12 +57,15 @@ function DOMEventListener(container)
 	//'cause i can.
 	this.removeEvent = function(currentIndex)
 	{
-		this.container.removeEventListener(
-			this.eventListeners[currentIndex].type,
-			this.eventListeners[currentIndex].callback,
-			false);
-
-		return this.eventListeners.splice(currentIndex,1).length;
+		if(typeof this.customEvents[this.eventListeners[currentIndex].type]
+				  == "undefined")
+			this.container.removeEventListener(
+				this.eventListeners[currentIndex].type,
+				this.eventListeners[currentIndex].callback,
+				false);
+		else
+			this.customEvents[type].removeCallback
+				(this.eventListeners[currentIndex].callback);
 	};
 
 	this.constructor(container);

@@ -16,12 +16,15 @@
 	//takes the engineOptions, so the game knows what it's playground is.
 	function Game(engineOptions) {
 		this.level = 0;		//The level you start with
+			this.goalPercentage = 0; //this shoudl probably be incorporated into the level.
 		this.stats = 0;		//eventually I wanna store the entire path the ball 
 							//took in here.
 		this.map = 0;		//current map state (so where are dividers, etc.)
+		this.dynmap = 0;
 		this._physMap = 0;
 
 		this.balls = 0;		//he main focus of the game.
+		this.walls = 0;
 		this.squares = 0;
 		this.dividers = 0;	//again, main focus of game.
 		//this.objects;	//this is for later neat addins
@@ -35,30 +38,41 @@
 		//this way I can add things to the physics engine fo the game engine.
 		this.physics = 0;
 
+		//this is just terrible... but I need it for getGridCoords.
+		//Remove this later during clean up.
+		this.graphics = 0;
+
+		var self = this;
 
 		this.constructor = function(engineOptions)
 		{
+			//REMOVE ME WHEN YOU CAN!!
+			this.graphics = engineOptions.graphics;
+
 			//some nice variables to know.
 			this.numOfBlocksWide = 15;
 			this.numOfBlocksHigh = 15;
 			this.blockWidth 
-					= (engineOptions.graphics.container.width 
-							/ engineOptions.scale)
+					= this.graphics.applyScale(engineOptions.graphics.container.width)
 								/ this.numOfBlocksWide;
 			this.blockHeight 
-					= (engineOptions.graphics.container.height 
-							/ engineOptions.scale)
+					= this.graphics.applyScale(engineOptions.graphics.container.height)
 								/ this.numOfBlocksHigh;
 
-			engineOptions.events.addEvent("mousemove", function(thisGame)
-				{
-					var v2 = thisGame.getGridCoord(event.offsetX, event.offsetY);
-					debuggr["mmove"] = "cursor coord: " +v2.x+", "+v2.y;
+			engineOptions.events.addEvent("swipe"
+				, function(e, startCoords, endCoords, thisGame) {
+					var isVert = Math.abs(endCoords.x - startCoords.x) < Math.abs(endCoords.y - startCoords.y);
+
+					var coords =
+						thisGame.getGridCoord(startCoords.x, startCoords.y);
+					thisGame.addWall(new Wall(coords, isVert, thisGame));
 				}, this);
 
 			this.map = new Array();
+			this.dynmap = new Array();
 
 			this.balls = new Array();
+			this.walls = [];
 			this.squares = new Array();
 
 			this.physics = engineOptions.physics;
@@ -69,11 +83,24 @@
 			this.clearMap();
 			//squares are added by setMapToDefault() including physics
 			this.setMapToDefault();
+			this.goalPercentage = 70;
 
-			this.balls[0] = new Ball(new b2Vec2(160, 200)
-										, 10
-										, new b2Vec2(80, 80));
-			this.physics.addBall(this.balls[0]);
+			setWallFinishFnc(this.wallFinishedCB);
+
+			this.addBall(new Ball(new b2Vec2(160, 200)
+									, 10
+									, new b2Vec2(160, 160)));
+
+			this.markAvailableMap();
+		};
+
+		this.addWall = function(wall) {
+			this.walls.push(wall);
+		};
+
+		this.addBall = function(ball) {
+			this.balls[0] = ball;
+			this.physics.addBall(ball);
 		};
 
 		this.setMapToDefault = function() {
@@ -98,21 +125,111 @@
 			this.addTile(7, 9, 'b');
 		};
 
+		this.markAvailableMap = function()
+		{
+			var Vecs = Directions.vecs;
+			var Dirs = Directions.dirs;
+			//copy dynmap to map. I should use jquery or something here.
+			var map = [];
+			for(var i=0; i!=this.dynmap.length; ++i) {
+				map[i] = [];
+				for(var k=0; k!= this.dynmap[i].length; ++k)
+					map[i][k] = this.dynmap[i][k];
+			}
+			//
+			var openCount = 0;
+			//get ball position.
+			var startPos = self.getGridCoord(self.balls[0].pos.x/2, self.balls[0].pos.y/2);
+			document.getElementById("console").innerHTML += "["+startPos.x+","+startPos.y+"]: " + map[startPos.x][startPos.y] + "<br />";
+			if(this.squareIsEmptyCustom(map, startPos)) {
+				++openCount;
+				map[startPos.x][startPos.y] = "checked";
+			}
+			//from ball position, spawn 4 seekers and add them an array.
+			var seekers = [startPos]
+			var curSeeker;
+			//keep removing the last element. This is equivilent to:
+			//depth-first search iterating
+			var tempmax = 0;
+			while(typeof (curSeeker = seekers.pop()) != "undefined")
+			{
+				for(i in Dirs) {
+					var newSeeker = addVecs(curSeeker, Vecs[Dirs[i]]);
+					if(this.squareIsEmptyCustom(map, newSeeker)){
+						++openCount;
+						map[newSeeker.x][newSeeker.y] = "checked";
+						seekers.push(newSeeker);
+						if(newSeeker.x + newSeeker.y > tempmax)
+							tempmax = newSeeker.x + newSeeker.y;
+					}
+				}
+			}
+			document.getElementById("console").innerHTML += "tempmax: " + tempmax+"<br />";
+			//when done, mark all other space as blocked off.
+			this.markDynInaccessible(map);
+			var percentageIsolated = 100 - (openCount / (this.numOfBlocksHigh * this.numOfBlocksWide) * 100);
+
+			document.getElementById("console").innerHTML += "percent: "+percentageIsolated+"<br />";
+
+			return percentageIsolated;
+		};
+
+		this.markDynInaccessible = function(map)
+		{
+			for(var i=0; i!=map.length; ++i)
+				for(var k=0; k!=map[i].length; ++k)
+					if(map[i][k] == "o")
+						this.dynmap[i][k] = "i";//for isolated.
+		};
+
+		//takes a grid position and checks to see if the square is occupied.
+		//For now it only checks the map...
+		//TODO: have this check other walls too.
+		this.squareIsEmpty = function(v2) {
+			return this.squareIsEmptyCustom(this.dynmap, v2);
+		};
+
+		this.squareIsEmptyCustom = function(map, v2) {
+			return map[v2.x][v2.y] == 'o';
+		};
+
 		this.clearMap = function() {
 			//fil the tile map with open space.
 			for(var i=0; i!=this.numOfBlocksWide; ++i) {
 				this.map[i] = new Array();	
-				for(var k=0; k!=this.numOfBlocksHigh; ++k)
+				this.dynmap[i] = new Array();
+				for(var k=0; k!=this.numOfBlocksHigh; ++k) {
 					this.map[i][k] = 'o';
+					this.dynmap[i][k] = 'o';
+				}
 			}
 
 			//clear the physical map.
 			this._physMap = [];
 		};
 
+		this.addDynTile = function(x, y, tile)
+		{
+			this.dynmap[x][y] = tile;
+			//this creates a plain block period... if i have more blocks in the future, I will need to add a switch case or something.
+			//probably another function that grabs a Rectangle depending on the type.
+
+			var newSquare = 
+				this._physMap[this._physMap.length]
+					= new Rectangle((x*this.blockWidth) + (this.blockWidth / 2),
+											(y*this.blockHeight) + (this.blockHeight / 2), 
+											this.blockWidth,
+											this.blockHeight);
+
+			//uncomment below line to draw the added tiles as if they were part of the map.
+			//this.squares[this.squares.length] = newSquare;
+			this.physics.addSquare(newSquare);
+		};
+
 		this.addTile = function(x, y, tile)
 		{
 			this.map[x][y] = tile;
+			this.dynmap[x][y] = tile;
 			//this creates a plain block period... if i have more blocks in the future, I will need to add a switch case or something.
 			//probably another function that grabs a Rectangle depending on the type.
 			var newSquare = 
@@ -127,36 +244,64 @@
 		};
 
 		this.drawMap = function(graphics) {
-			for(i = 0; i!=this.numOfBlocksWide; ++i)
-				for(k = 0; k!=this.numOfBlocksHigh; ++k)
-					if(this.map[i][k] == 'b')
+			for(i = 0; i!=this.numOfBlocksWide; ++i) {
+				for(k = 0; k!=this.numOfBlocksHigh; ++k) {
+					if(this.dynmap[i][k] == 'b')
 						graphics.drawRect
 							(i*this.blockWidth, k*this.blockHeight, 
 								this.blockWidth, this.blockHeight, 
 								new RGBA(0,0,0,0.5));
+					else if(this.dynmap[i][k] == 'i')
+						graphics.drawRect
+							(i*this.blockWidth, k*this.blockHeight, 
+								this.blockWidth, this.blockHeight, 
+								new RGBA(80,80,255,0.5));
+				}
+			}
 		};
 
 		this.getGridCoord = function(left, top)
 		{
-			return new b2Vec2(parseInt(left/this.numOfBlocksWide)
-										, parseInt(top/this.numOfBlocksHigh));
-		}
-
-		this.makeVerticalWall = function() {
+			return new b2Vec2(parseInt(this.graphics.applyScale(left)/this.blockWidth)
+										, parseInt(this.graphics.applyScale(top)/this.blockHeight));
 		};
 
-		this.makeHorizontalWall = function() {
+		//for now, "this" refers to the wall, and self refers to the game.
+		this.wallFinishedCB = function() {
+			self.isolatedPercentage = self.markAvailableMap();
+		};
+
+		this.mapToString = function() {
+			var str = "";
+			for(var i=0; i!=this.dynmap.length; ++i) {
+				for(var k=0; k!=this.dynmap.length; ++k)
+					str += this.dynmap[i][k] + " ";
+				str += "\n";
+			}
+			return str;
 		};
 
 		this.update = function(gameTime) {
+			//I don't like this here, but with screens, it needs to be
+			//until I think of a better solution.
+			this.physics.update(gameTime);
+			//
+			if(this.isolatedPercentage >= this.goalPercentage) {
+				PauseEngine();
+				alert("You win!");
+			}
 			for(var i=0; i!=this.balls.length; ++i)
 				this.balls[i].update(gameTime);
+			for(var i=0; i!=this.walls.length; ++i)
+				this.walls[i].update(gameTime);
 		};
 
 		this.draw = function(graphics) {
 			this.drawMap(graphics);
 			for(var i=0; i!=this.balls.length; ++i)
 				this.balls[i].draw(graphics);
+			for(var i=0; i!=this.walls.length; ++i)
+				this.walls[i].draw(graphics);
 			for(var i=0; i!=this.squares.length; ++i)
 				this.squares[i].draw(graphics);
 		};

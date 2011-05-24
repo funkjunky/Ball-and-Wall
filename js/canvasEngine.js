@@ -20,6 +20,11 @@ function CanvasEngine(canvas, scale)
 											this.container.height / this.scale);
 	};
 
+	this.applyScale = function(num)
+	{
+		return num / this.scale;
+	};
+
 	this.drawRect = function(x, y, width, height, rgba)
 	{
 		var ctx = this._getC2d();

@@ -9,22 +9,29 @@ function Box2dPhysics()
 	this.world = 0;
 	this.balls = 0;
 	this.squares = 0;
+	this.collisionEngine = 0;
 
 	this.constructor = function()
 	{
 		this.world = getWorld(600, 600);
 		this.balls = [];
 		this.squares = [];
+		this.collisionEngine = new MyCollisions();
+	};
+
+	this.init = function() {
 	};
 
 	this.addBall = function(ball)
 	{
-		ball.supressMovement(true);
+		//ball.supressMovement(true);
 
 		var phyBall = createBall(this.world, ball.pos, ball.radius);
 		phyBall.m_linearVelocity = ball.linearVel;
 
 		this.balls[this.balls.length] = new ObjectsContainer(phyBall, ball);
+
+		return this.collisionEngine.addBall(ball);
 	};
 	this.addSquare = function(square)
 	{
@@ -34,6 +41,18 @@ function Box2dPhysics()
 								, square.width / 2
 								, square.height / 2, true)
 				, square);
+
+		return this.collisionEngine.addSquare(square);
+	};
+
+	this.addObjEvent = function(objID, fnc)
+	{
+		return this.collisionEngine.addObjEvent(objID, fnc);
+	};
+
+	this.removeObjEvent = function(evtID)
+	{
+		this.collisionEngine.removeObjEvent(evtID);
 	};
 
 	this.update = function(gameTime) {
@@ -47,7 +66,9 @@ function Box2dPhysics()
 											+ ", "
 											+ this.balls[0].phyObject.m_position.y + ")";
 
-  		this.world.Step(1.0/60, 1);
+		this.collisionEngine.update(gameTime);
+
+  		this.world.Step(gameTime, 1);
 	};
 
 	this.constructor();
@@ -70,13 +91,6 @@ function ObjectsContainer(phyObject, myObject)
 	}
 
 	this.constructor(phyObject, myObject);
-}
-
-function step(cnt, canvas, ctx) {
-  world.Step(1.0/60, 1);
-  ctx.clearRect(0, 0, parseInt(canvas.width), parseInt(canvas.height));
-  drawWorld(world, ctx); // see demos/draw_world.js
-  setTimeout('step(' + (cnt || 0) + ')', 10);
 }
 
 function getWorld(width, height)
@@ -112,6 +126,10 @@ function createBox(world, pos, width, height, fixed) {
 	boxBd.position = pos;
 	return world.CreateBody(boxBd)
 }
+
+//////////////////////////////
+//Drawing functions for showing objects in the physics engine.
+/////////////////////////////
 
 function drawWorld(world, context) {
 	for (var j = world.m_jointList; j; j = j.m_next) {
@@ -161,6 +179,7 @@ function drawJoint(joint, context) {
 	}
 	context.stroke();
 }
+
 function drawShape(shape, context) {
 	context.strokeStyle = '#000000';
 	context.beginPath();

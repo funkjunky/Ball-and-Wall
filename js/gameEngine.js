@@ -8,9 +8,11 @@
 // box2d library (maybe)
 
 	var debuggr = {};
+	var _engine_ = {};
 
 	function Engine(_canvas)
 	{
+		_engine_ = this;
 		//Member Variables
 
 		//initiate everything to 0. Constructor sets values.
@@ -23,6 +25,11 @@
 		this.physics = 0;
 		this.graphics = 0;
 		this.events = 0;
+
+		//screens
+		this.screens = {};
+		this.currentScreen = 0;
+		this.overlayScreens = []; //an array of screen keys, NOT screens.
 		
 		//Game Engine options.
 		this.options = 0;
@@ -33,13 +40,13 @@
 		//
 
 		//called at the end of the class.
-		this.constructor = function(_game, _canvas)
+		this.constructor = function(_canvas)
 		{
 			this.options = new Options(this);
 
 			//physics engine
-			this.physics = this.options.physics = new MyPhysics();
-			//this.physics = new Box2dPhysics();
+			this.physics = this.options.physics = new Box2dPhysics();
+			//this.physics = this.options.physics = new MyPhysics();
 
 			//graphics engine.
 			this.graphics = this.options.graphics = 
@@ -58,7 +65,10 @@
 		//called after the constructor, but before.... ummm... the main loop?
 		this.init = function(_game)
 		{
+			this.physics.init();
 			this.game = _game;
+			this.screens["play"] = this.game;
+			this.currentScreen = "play";
 
 			//I pass this to mainLoop, to maintain context with mainLoop.
 			this.lastUTC = this.getUTC();
@@ -67,7 +77,7 @@
 
 			//set up pausing. Currently we pause on any keyboard input.
 			//Note: you can only catch keydown if you make canvas focusable.
-			this.events.addEvent("keydown", function(thisEngine)
+			this.events.addEvent("keydown", function(e, thisEngine)
 				{
 					if(thisEngine.isPaused())
 						thisEngine.unpauseGame();
@@ -93,11 +103,16 @@
 				myself.lastUTC = nowUTC;
 				debuggr["mainLoop"] 
 					= "diff passed to update: " + diffUTCinSeconds;
-				myself.physics.update(diffUTCinSeconds);
-				myself.game.update(diffUTCinSeconds);
+				if(myself.overlayScreens.length == 0)
+					myself.screens[myself.currentScreen].update(diffUTCinSeconds);
+				else
+					myself.screens[peek(myself.overlayScreens)]
+								.update(diffUTCinSeconds);
 	
 				myself.graphics.clear();
-				myself.game.draw(myself.graphics);
+				myself.screens[myself.currentScreen].draw(myself.graphics);
+				for(var i=myself.overlayScreens.length-1; i >= 0; --i)
+					myself.screens[myself.overlayScreens[i]].draw(myself.graphics);
 
 				document.getElementById("debug").innerHTML = "Debug:<br />";
 				for(message in myself.debuggr)
@@ -167,9 +182,22 @@
 		{	
 			this.scale = 0.5;
 			this.gameSpeed = 1; 
-			this.intervalSpeed = 1;	
+			//50 frames per second (1000ms)
+			this.intervalSpeed = 1000/50;	
+			//FUTURE: When I'm willing to do interpolation to save framerate
+			//I'll implement this along with ticks and remove passing
+			//gametime to update.
+			//this.updateSpeed = 1000/25;
 		};
 			
 		this.constructor(engine);
 	}
 
+
+function PauseEngine() {
+	_engine_.pauseGame();
+}
+
+function peek(arr) {
+	return arr[arr.length-1];
+}
