@@ -35,6 +35,9 @@ function StartMenu(engine)
 		});
 	};
 
+	this.show = function(){};
+	this.hide = function() {};
+
 	this.update = function(gameTime)
 	{
 	};

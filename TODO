@@ -2,23 +2,19 @@
 Short Term Plans
 ---
 TODO:
+	-add show and hide methods to all screens.
+		-the show is called when switched to.
+		-the hide is called when switched from.
 	-add a level editor screen.
-	-events
-		Questions:
-			-what about larger levels, adding balls, naming the level,
-			-buttons like save, load, undo, redo, etc.
-		Solutions:
-			-have another pseudo screen which is for the editing level.
-				-this pseudo screen can be adjusted in scale, and the number of blocks wide and high and the size of the level can be adjusted.
-			-have a pseudo screen for the tool bars.
-		-click and drag for placing lines of blocks. (single flows natural)
-			-figure out how to alias the line.
-	-graphical format
-		-
-	-storage format
-		-basic text file.
-		-ability to save locally.
-		-add the ability to have multiple balls.
+		-in the constructor insert the controls into the DOM (into the fieldset)
+		-add the events for all of the controls using the standard event handler (not games event handler).
+		-borrow a lot of attributes from ballGame including:
+			-map, balls
+		-add a swipe event. If current state is block line, then draw an alias line between the points, if it's a ball, then draw a ball and add an arrow pointing in the direct the starting vel will be, and if it's a block fill, then fill to the point.
+		-implement the save button to use sessionStorage.setItem
+			-serialize the map.
+			-the click event will be set in the leveleditor class so it will
+			have access to the map.
 	-add a level selection screen with a mini preview of the level.
 	-add an arrow overlay to where the player is doing their swipe.
 		-add a drag event, which updated on mouse move after mousedown,

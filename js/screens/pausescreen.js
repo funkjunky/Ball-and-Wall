@@ -12,6 +12,8 @@ function PauseScreen(engine)
 		});
 	};
 
+	this.show = function() {};
+	this.hide = function() {};
 	this.update = function(gameTime) {};
 	this.draw = function(graphics)
 	{

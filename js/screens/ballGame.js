@@ -314,6 +314,11 @@
 			return str;
 		};
 
+		this.show = function() {
+		};
+		this.hide = function() {
+		};
+
 		this.update = function(gameTime) {
 			//I don't like this here, but with screens, it needs to be
 			//until I think of a better solution.

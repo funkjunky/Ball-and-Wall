@@ -20,6 +20,8 @@ function GameEnd(engine)
 		this.events.addEvent("mouseup", closeMe);
 	};
 
+	this.show=function(){};this.hide=function(){};
+
 	this.update = function(gameTime) {};
 	this.draw = function(graphics) {
 		var text = "UNSPECIFIED CONCLUSION";
