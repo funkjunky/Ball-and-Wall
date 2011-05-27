@@ -8,13 +8,20 @@
 	function initGame(canvas)
 	{
 		var theEngine = new Engine(canvas);
-		var game = new Game(theEngine.options);		
-		game.init();
-		theEngine.init(game);
+		var game = new Game(theEngine.options, theEngine);		
+		var startMenu = new StartMenu(theEngine);
+		var gameEnd = new GameEnd(theEngine);
+		var pause = new PauseScreen(theEngine);
+		theEngine.addScreen("start", startMenu);
+		theEngine.addScreen("gameplay", game);
+		theEngine.addScreen("gameend", gameEnd);
+		theEngine.addScreen("pause", pause);
+		theEngine.init("start");
 	}
 
 	//takes the engineOptions, so the game knows what it's playground is.
-	function Game(engineOptions) {
+	//TODO: remove either engineOptions or engine as a param.
+	function Game(engineOptions, engine) {
 		this.level = 0;		//The level you start with
 			this.goalPercentage = 0; //this shoudl probably be incorporated into the level.
 		this.stats = 0;		//eventually I wanna store the entire path the ball 
@@ -41,16 +48,28 @@
 		//this is just terrible... but I need it for getGridCoords.
 		//Remove this later during clean up.
 		this.graphics = 0;
+		
+		//every screen should probably have their own event engine... i unno
+		this.events = 0;
+
+		//TODO: reconsider... this is just for switching screens at endgame.
+		//			In update.
+		this.engine = 0;
 
 		var self = this;
 
-		this.constructor = function(engineOptions)
+		this.constructor = function(engineOptions, engine)
 		{
-			//REMOVE ME WHEN YOU CAN!!
+			//TODO: remove, see consideration above.
+			this.engine = engine;
+
+			//REMOVE ME WHEN YOU CAN!! (graphics)
 			this.graphics = engineOptions.graphics;
 
+			this.events = engine.getNewDefaultEventEngine();
+
 			//some nice variables to know.
-			this.numOfBlocksWide = 15;
+			this.numOfBlocksWide = 24;
 			this.numOfBlocksHigh = 15;
 			this.blockWidth 
 					= this.graphics.applyScale(engineOptions.graphics.container.width)
@@ -59,7 +78,13 @@
 					= this.graphics.applyScale(engineOptions.graphics.container.height)
 								/ this.numOfBlocksHigh;
 
-			engineOptions.events.addEvent("swipe"
+			this.events.addEvent("keyup", function(e) {
+				if(e.keyCode == 80) {
+					engine.openOverlay("pause");
+				}
+			});
+
+			this.events.addEvent("swipe"
 				, function(e, startCoords, endCoords, thisGame) {
 					var isVert = Math.abs(endCoords.x - startCoords.x) < Math.abs(endCoords.y - startCoords.y);
 
@@ -80,15 +105,23 @@
 
 		this.init = function()
 		{
+			this.balls = [];
+			this.walls = [];
+			this.isolatedPercentage = 0;
+
 			this.clearMap();
 			//squares are added by setMapToDefault() including physics
 			this.setMapToDefault();
 			this.goalPercentage = 70;
 
 			setWallFinishFnc(this.wallFinishedCB);
+			setWallBrokenFnc(function() {
+				self.engine.screens["gameend"].won = false;
+				self.engine.switchScreenTo("gameend");
+			});
 
 			this.addBall(new Ball(new b2Vec2(160, 200)
-									, 10
+									, this.blockWidth / 2 
 									, new b2Vec2(160, 160)));
 
 			this.markAvailableMap();
@@ -108,13 +141,13 @@
 			for(var i=0; i!=this.numOfBlocksWide; ++i)
 			{
 				this.addTile(i, 0, 'b');
-				this.addTile(i, this.numOfBlocksWide - 1, 'b');
+				this.addTile(i, this.numOfBlocksHigh - 1, 'b');
 			}
 			//left and right outer walls.
 			for(var k=0; k!=this.numOfBlocksHigh; ++k)
 			{
 				this.addTile(0, k, 'b');
-				this.addTile(this.numOfBlocksHigh - 1, k, 'b');
+				this.addTile(this.numOfBlocksWide - 1, k, 'b');
 			}
 			//random square obstacles
 			this.addTile(9, 10, 'b');
@@ -287,8 +320,8 @@
 			this.physics.update(gameTime);
 			//
 			if(this.isolatedPercentage >= this.goalPercentage) {
-				PauseEngine();
-				alert("You win!");
+				this.engine.GetScreen("gameend").won = true;
+				this.engine.switchScreenTo("gameend");
 			}
 			for(var i=0; i!=this.balls.length; ++i)
 				this.balls[i].update(gameTime);
@@ -306,5 +339,5 @@
 				this.squares[i].draw(graphics);
 		};
 
-		this.constructor(engineOptions);
+		this.constructor(engineOptions, engine);
 	}

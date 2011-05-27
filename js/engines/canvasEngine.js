@@ -45,11 +45,37 @@ function CanvasEngine(canvas, scale)
 		ctx.fill();
 	};
 
+	//pass an object like "{font: "12pt ariel", baseline: "middle"}"
+	this.setOptions = function(options)
+	{
+		var ctx = this._getC2d();
+
+		for(i in options)
+			ctx[i] = options[i];
+	};
+
+	this.drawText = function(text, x, y)
+	{
+		var ctx = this._getC2d();
+
+		ctx.fillText(text, x, y);
+	};
+
 	this.fillStyle = function(rgba)
 	{
 		debuggr["fillstyle"] = "red: " + rgba.r + " ~ alpha: " + rgba.a;
 		return "rgba(" + rgba.r + "," + rgba.g + "," + rgba.b + "," 
 					+ rgba.a + ")";
+	};
+
+	this.ScaleHeight = function()
+	{
+		return this.container.height / this.scale;
+	};
+
+	this.ScaleWidth = function()
+	{
+		return this.container.width / this.scale;
 	};
 
 	//Private Methods

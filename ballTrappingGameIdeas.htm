@@ -69,29 +69,31 @@
     <script src='js/box2d/dynamics/joints/b2RevoluteJoint.js'></script> 
     <script src='js/box2d/dynamics/joints/b2RevoluteJointDef.js'></script>
 
-	 <script src="js/rectangle.js"></script>
-	 <script src="js/ball.js"></script>
-	 <script src="js/wall.js"></script>
-	 <script src="js/listener.js"></script>
-	 <script src="js/gameEngine.js"></script>
-	 <script src="js/canvasEngine.js"></script>
-  	 <script src="js/ballGame.js"></script>
-  	 <script src="js/box2dPhysics.js"></script>
-	 <script src="js/box2dPhysics.js"></script>
-	 <script src="js/DOMEventListener.js"></script>
-	 <script src="js/DOMGraphics.js"></script>
-	 <script src="js/forcesEngine.js"></script>
-  	 <script src="js/collisionEngine.js"></script>
-  	 <script src="js/myPhysics.js"></script>
-  	 <script src="js/swipe.js"></script>
+	 <script src="js/gameobjects/rectangle.js"></script>
+	 <script src="js/gameobjects/ball.js"></script>
+	 <script src="js/gameobjects/wall.js"></script>
+	 <script src="js/engines/listener.js"></script>
+	 <script src="js/engines/gameEngine.js"></script>
+	 <script src="js/engines/canvasEngine.js"></script>
+  	 <script src="js/screens/ballGame.js"></script>
+  	 <script src="js/engines/box2dPhysics.js"></script>
+	 <script src="js/engines/DOMEventListener.js"></script>
+	 <script src="js/engines/DOMGraphics.js"></script>
+	 <script src="js/engines/forcesEngine.js"></script>
+  	 <script src="js/engines/collisionEngine.js"></script>
+  	 <script src="js/engines/myPhysics.js"></script>
+  	 <script src="js/engines/events/swipe.js"></script>
+  	 <script src="js/screens/startmenu.js"></script>
+  	 <script src="js/screens/gameend.js"></script>
+  	 <script src="js/screens/pausescreen.js"></script>
   <style>
    canvas { border: 1px solid black; }
   </style>
  </head>
  <body onload="initGame(document.getElementById('testCanvas'));">
-<div>
-  <canvas tabindex=-1 id="testCanvas" width="300" height="300">This is a Canvas Test: template</canvas>
-</div>
+<fieldset><legend><h1>Ball And Wall Game</h1></legend>
+  <canvas tabindex=-1 id="testCanvas" width="800" height="500">This is a Canvas Test: template</canvas>
+</fieldset>
 <span id="debug" style="white-space: pre-wrap"></span><br />
 <span id="console" style="white-space: pre-wrap"></span>
  </body>

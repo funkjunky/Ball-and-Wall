@@ -13,6 +13,7 @@
 	function Engine(_canvas)
 	{
 		_engine_ = this;
+		var self = this;
 		//Member Variables
 
 		//initiate everything to 0. Constructor sets values.
@@ -34,14 +35,16 @@
 		//Game Engine options.
 		this.options = 0;
 
-		//The game using this engine.
-		this.game = 0;
+		//the container we are running the game in.
+		this.container = 0;
 
 		//
 
 		//called at the end of the class.
 		this.constructor = function(_canvas)
 		{
+			this.container = _canvas;
+
 			this.options = new Options(this);
 
 			//physics engine
@@ -55,7 +58,9 @@
 			//	new DOMGraphicsEngine(_canvas.parentElement, this.options.scale);
 
 			//event listener
-			this.events = this.options.events = new DOMEventListener(_canvas);
+			this.events = this.options.events = this.getNewDefaultEventEngine();
+			//necessary for the engine, because the default is paused for screens.
+			this.events.unpauseAll();
 			
 			//This is a sandboxing issue... during production, comment this out
 			//that will disable th debugger, and take away the reference to a
@@ -63,12 +68,11 @@
 			this.debuggr = debuggr;
 		};
 		//called after the constructor, but before.... ummm... the main loop?
-		this.init = function(_game)
+		//TODO: shouldn't need the screen param. If currentScreen is not set, then don't update or draw anything.
+		this.init = function(screenName)
 		{
 			this.physics.init();
-			this.game = _game;
-			this.screens["play"] = this.game;
-			this.currentScreen = "play";
+			this.switchScreenTo(screenName);
 
 			//I pass this to mainLoop, to maintain context with mainLoop.
 			this.lastUTC = this.getUTC();
@@ -79,10 +83,13 @@
 			//Note: you can only catch keydown if you make canvas focusable.
 			this.events.addEvent("keydown", function(e, thisEngine)
 				{
-					if(thisEngine.isPaused())
-						thisEngine.unpauseGame();
-					else
-						thisEngine.pauseGame();
+					if(e.keyCode == 27)
+					{
+						if(thisEngine.isPaused())
+							thisEngine.unpauseGame();
+						else
+							thisEngine.pauseGame();
+					}
 				}, this);
 		};
 
@@ -111,7 +118,8 @@
 	
 				myself.graphics.clear();
 				myself.screens[myself.currentScreen].draw(myself.graphics);
-				for(var i=myself.overlayScreens.length-1; i >= 0; --i)
+debuggr["mainloopddd"] = "overlay screens open: "+myself.overlayScreens.length+"\n";
+				for(var i=0; i != myself.overlayScreens.length; ++i)
 					myself.screens[myself.overlayScreens[i]].draw(myself.graphics);
 
 				document.getElementById("debug").innerHTML = "Debug:<br />";
@@ -122,15 +130,24 @@
 					myself.debuggr[message] = "";
 		};
 
+		//TODO: rename to pauseEngine
 		this.pauseGame = function()
 		{
 			clearInterval(this.ticker);
 			this.ticker = 0;
+			if(this.overlayScreens.length == 0)
+				this.screens[this.currentScreen].events.pauseAll();
+			else
+				this.screens[peek(this.overlayScreens)].events.pauseAll();
 		};
 	
 		this.unpauseGame = function()
 		{
 			this.lastUTC = this.getUTC();
+			if(this.overlayScreens.length == 0)
+				this.screens[this.currentScreen].events.unpauseAll();
+			else
+				this.screens[peek(this.overlayScreens)].events.unpauseAll();
 			this.ticker = setInterval(this.mainLoop
 					, this.options.intervalSpeed, this);
 		};
@@ -147,6 +164,62 @@
 									date.getMinutes(),
 									date.getSeconds(),
 									date.getMilliseconds());
+		};
+
+		this.getNewDefaultEventEngine = function() 
+		{
+			return new DOMEventListener(this.container);
+		};
+
+		this.addScreen = function(screenName, screen)
+		{
+			this.screens[screenName] = screen;
+		};
+
+		this.removeScreen = function(screenName)
+		{
+			delete this.screens[screenName];
+		};
+
+		this.switchScreenTo = function(screenName)
+		{
+			//pauseAll on current screen events.
+			//TODO: check against screens instead, and throw if not in them.
+			if(this.currentScreen != 0)
+				this.screens[this.currentScreen].events.pauseAll();
+			this.currentScreen = screenName;
+			//unpauseAll on new screen events.
+			this.screens[this.currentScreen].events.unpauseAll();
+		};
+
+		this.openOverlay = function(screenName)
+		{
+				  //TODO: overlay screens are ugly as fuck. They should just hold a reference of the screen so I don't need to do this crap.
+			if(this.overlayScreens.length != 0)
+				this.screens[peek(this.overlayScreens)].events.pauseAll();
+			else
+				this.screens[this.currentScreen].events.pauseAll();
+
+			this.overlayScreens.push(screenName);
+			//A hack to stop the current event to propogate to create a loop with a new screen going back to the hold screen, etc.
+			//(see: pausing)
+			setTimeout(function() {
+				self.screens[peek(self.overlayScreens)].events.unpauseAll();
+			}, 1);
+		};
+
+		this.closeOverlay = function()
+		{
+			this.screens[this.overlayScreens.pop()].events.pauseAll();
+			if(this.overlayScreens.length == 0)
+				setTimeout(function() {
+					self.screens[self.currentScreen].events.unpauseAll();
+				}, 1);
+		};
+
+		this.GetScreen = function(text)
+		{
+			return this.screens[text];
 		};
 
 		this.constructor(_canvas);

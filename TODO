@@ -2,33 +2,20 @@
 Short Term Plans
 ---
 TODO:
-	-create a screens engine, or some mechanics to implement different screen
-		-The current ballGame could be a screen...
-			-the engine will have an array holding all screens.
-			-the engine will also have a stack (array using push and pop)
-				for all overlay screens.
-			-the engine only calls update and draw for the currentScreen
-			-If their are any overlay screens, then the top overlay screen
-				has update called on it, while the current screen and all
-				overlay screens have draw called for them.
-			-every screen will have it's own event engine and all other engines
-			-The events engine needs a method of pausing all events.
-			-add a start menu screen with the option to start a game or start
-			the game.
-				-have an array for options, and have the draw method write the
-				text for them, nicely aligned, no matter how many are in the
-				array.
-				-the options should have functions attached to them for when
-				they are selected.
-				-add the keyup event for going up and down the menu with keys.
-				-add mouse move event in case the person hovers over the
-				options.
-					-if an option is hovered over, it is considered to be
-					keyed to.
-				-add click, for if the person clicks inside one of the options.
-			-add a gameEnd screen
-			-add a pause overlay screen.
 	-add a level editor screen.
+	-events
+		Questions:
+			-what about larger levels, adding balls, naming the level,
+			-buttons like save, load, undo, redo, etc.
+		Solutions:
+			-have another pseudo screen which is for the editing level.
+				-this pseudo screen can be adjusted in scale, and the number of blocks wide and high and the size of the level can be adjusted.
+			-have a pseudo screen for the tool bars.
+		-click and drag for placing lines of blocks. (single flows natural)
+			-figure out how to alias the line.
+	-graphical format
+		-
+	-storage format
 		-basic text file.
 		-ability to save locally.
 		-add the ability to have multiple balls.
@@ -39,6 +26,7 @@ TODO:
 		-the event should be passed a start and current coord parameters.
 		-It should be updated every mouse move.
 		-WHat about on mouseup release?
+	-ready for alpha release.
 	-error console, in the form of messages. A new P tag for every message/
 		as well as the time it happened and what kind of error/warning it was.
 		different from the debug screen. These messages can't be changed.
@@ -49,11 +37,21 @@ TODO:
 	-Refine like crazy and then release.
 	
 IMPROVEMENTS:
+-the ballGame screen class should be turned into the class "gameplay",
+all onload stuff should be put in a new ballGame.js file, while the screen stuff should be put in gameplay.js.
+-public Methods have capitalized camel casing, and private ones have an underscore preceeding and regular camel casing. member variables have regular camel casing.
 -remove graphics engine coupling from entire game class. (scale is prob)
 -have event listener use jQuery for events and use namespacing.
 -events should be completely wrapper to stay agnostic.
 	-this includes wrapping the event object inside the called method.
 -dragging for walls should be the same event for iphone drag and click and drag.
+-add mouse move event in case the person hovers over the options.
+	-if an option is hovered over, it is considered to be
+	keyed to.
+	-add click, for if the person clicks inside one of the options.
+-When you close a window, it shouldn't matter whether it is overlay or not, the engine should handle how to close it. Closing by the screen itsself should be context insensative.
+-their should be defaults for most functions. Getting started with my engine should be a snap.
+	-The draw text requires setup with fonts, baseline, fontsize, etc. It shouldn't require it.
 -How to pass collision information and improve my physics bounce.
 -multiplayer one player tries to isolate, the other tries to open up.
 	-time based, and the isolater is trying to gain time, while the other tries to stop them from completing the level.

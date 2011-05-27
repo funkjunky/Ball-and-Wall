@@ -13,7 +13,8 @@ function Box2dPhysics()
 
 	this.constructor = function()
 	{
-		this.world = getWorld(600, 600);
+		//TODO: remove _engine_ reference.
+		this.world = getWorld(_engine_.container.width / _engine_.options.scale, _engine_.container.height / _engine_.options.scale);
 		this.balls = [];
 		this.squares = [];
 		this.collisionEngine = new MyCollisions();
